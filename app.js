@@ -571,6 +571,13 @@ function init() {
     if (user) {
       currentUser = user;
       updateUserBar(user);
+
+      // ログイン画面またはイントロ画面が表示中なら、適切な画面に遷移させる
+      const loginScreen = document.getElementById('screen-login');
+      const introScreen = document.getElementById('screen-intro');
+      if (loginScreen.classList.contains('active') || introScreen.classList.contains('active')) {
+        await checkExistingFamily();
+      }
     }
   });
 
