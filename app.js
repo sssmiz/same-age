@@ -123,15 +123,20 @@ async function googleLogin() {
   try {
     const result = await signInWithPopup(auth, googleProvider);
     currentUser = result.user;
-    // Save user info to Firestore
-    await setDoc(doc(db, 'users', currentUser.uid), {
-      displayName: currentUser.displayName,
-      email: currentUser.email,
-      photoURL: currentUser.photoURL || null,
-      lastLogin: serverTimestamp()
-    }, { merge: true });
-
     updateUserBar(currentUser);
+
+    // Save user info to Firestore (失敗しても画面遷移は続ける)
+    try {
+      await setDoc(doc(db, 'users', currentUser.uid), {
+        displayName: currentUser.displayName,
+        email: currentUser.email,
+        photoURL: currentUser.photoURL || null,
+        lastLogin: serverTimestamp()
+      }, { merge: true });
+    } catch (firestoreError) {
+      console.warn('Firestore save skipped:', firestoreError);
+    }
+
     await checkExistingFamily();
   } catch (error) {
     console.error('Login error:', error);
@@ -155,22 +160,26 @@ async function logout() {
 
 // ===== Family / Pairing =====
 async function checkExistingFamily() {
-  const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
-  const userData = userDoc.data();
+  try {
+    const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+    const userData = userDoc.data();
 
-  if (userData && userData.familyId) {
-    familyId = userData.familyId;
-    userRole = userData.role;
-    const familyDoc = await getDoc(doc(db, 'families', familyId));
-    if (familyDoc.exists()) {
-      familyData = familyDoc.data();
-      fatherName = familyData.fatherName || 'お父さん';
-      targetAge = familyData.childAge || 18;
-      showScreen('screen-setup');
-      prefillSetup();
-      showToast(`おかえりなさい！（${userRole === 'father' ? '父親' : '子供'}として参加中）`);
-      return;
+    if (userData && userData.familyId) {
+      familyId = userData.familyId;
+      userRole = userData.role;
+      const familyDoc = await getDoc(doc(db, 'families', familyId));
+      if (familyDoc.exists()) {
+        familyData = familyDoc.data();
+        fatherName = familyData.fatherName || 'お父さん';
+        targetAge = familyData.childAge || 18;
+        showScreen('screen-setup');
+        prefillSetup();
+        showToast(`おかえりなさい！（${userRole === 'father' ? '父親' : '子供'}として参加中）`);
+        return;
+      }
     }
+  } catch (err) {
+    console.warn('Family check skipped:', err);
   }
   showScreen('screen-role');
 }
