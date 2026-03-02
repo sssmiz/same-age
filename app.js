@@ -1,6 +1,6 @@
 // ===== Firebase Imports =====
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut }
+import { getAuth, signInWithPopup, signInWithRedirect, GoogleAuthProvider, onAuthStateChanged, signOut }
   from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc, getDocs, collection, query, where, serverTimestamp, updateDoc }
   from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
@@ -125,28 +125,26 @@ async function googleLogin() {
     currentUser = result.user;
     updateUserBar(currentUser);
 
-    // Save user info to Firestore (失敗しても画面遷移は続ける)
-    try {
-      await setDoc(doc(db, 'users', currentUser.uid), {
-        displayName: currentUser.displayName,
-        email: currentUser.email,
-        photoURL: currentUser.photoURL || null,
-        lastLogin: serverTimestamp()
-      }, { merge: true });
-    } catch (firestoreError) {
-      console.warn('Firestore save skipped:', firestoreError);
-    }
+    // Firestore保存（失敗しても画面遷移は続ける）
+    setDoc(doc(db, 'users', currentUser.uid), {
+      displayName: currentUser.displayName,
+      email: currentUser.email,
+      photoURL: currentUser.photoURL || null,
+      lastLogin: serverTimestamp()
+    }, { merge: true }).catch(e => console.warn('Firestore save skipped:', e));
 
     await checkExistingFamily();
   } catch (error) {
     console.error('Login error:', error);
     if (error.code === 'auth/popup-closed-by-user') {
       showToast('ログインがキャンセルされました');
+    } else if (['auth/popup-blocked', 'auth/operation-not-supported-in-this-environment', 'auth/unauthorized-domain'].includes(error.code)) {
+      await signInWithRedirect(auth, googleProvider);
     } else {
       showToast('ログインエラーが発生しました');
     }
   }
-}
+}           
 
 async function logout() {
   await signOut(auth);
