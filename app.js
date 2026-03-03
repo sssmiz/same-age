@@ -5,11 +5,10 @@ let currentCard = 0;
 let fatherName = 'お父さん';
 let targetAge = 18;
 let fatherCurrentAge = 50;
-let selectedWho = null;
 let answers = [];
 let eraData = null;
 
-// ===== 時代背景データベース（1965年〜2010年） =====
+// ===== 時代背景データベース（1965年〜2015年） =====
 const eraDatabase = {
   1965: {
     events: ['東京オリンピック翌年', 'ベトナム戦争激化'],
@@ -133,6 +132,7 @@ const eraDatabase = {
 };
 
 // ===== 父のプリセット記憶データ =====
+// （カードゲーム中は隠しておき、比較画面で初めて表示する）
 const fatherMemories = {
   dream: '高校生の頃は漠然とエンジニアになりたいと思っていた。ものを作るのが好きだったから。',
   fear: '受験に落ちるのが怖かった。自分だけ取り残されるんじゃないかと。',
@@ -147,7 +147,7 @@ const cardTemplates = [
     type: 'DREAM',
     label: '夢・志',
     color: '#7C5BBA',
-    question: '{{age}}歳のとき、将来の夢は何でしたか？\n今の自分に近い夢でしたか？',
+    question: '{{age}}のとき、将来の夢は何でしたか？\n今の自分に近い夢でしたか？',
     hint: '夢が変わっていても、変わっていなくてもOK。聞いてみよう。',
     memoryKey: 'dream',
   },
@@ -155,7 +155,7 @@ const cardTemplates = [
     type: 'FEAR',
     label: '恐れ・不安',
     color: '#C0392B',
-    question: '{{age}}歳のとき、一番怖かったことや\n不安だったことは何ですか？',
+    question: '{{age}}のとき、一番怖かったことや\n不安だったことは何ですか？',
     hint: '失敗への不安、人間関係、将来への焦り。誰でも持っていたはず。',
     memoryKey: 'fear',
   },
@@ -163,7 +163,7 @@ const cardTemplates = [
     type: 'SECRET',
     label: '本音・秘密',
     color: '#1A8A7A',
-    question: '{{age}}歳のとき、親に言えなかった\n秘密や本音はありましたか？',
+    question: '{{age}}のとき、親に言えなかった\n秘密や本音はありましたか？',
     hint: '言えなかった言葉が、今日のヒントかもしれない。',
     memoryKey: 'secret',
   },
@@ -171,7 +171,7 @@ const cardTemplates = [
     type: 'JOY',
     label: '喜び・日常',
     color: '#D4821A',
-    question: '{{age}}歳のとき、何が一番楽しかった？\n毎週何をして過ごしていましたか？',
+    question: '{{age}}のとき、何が一番楽しかった？\n毎週何をして過ごしていましたか？',
     hint: '当時の日常がそのまま、その人の性格を表している。',
     memoryKey: 'joy',
   },
@@ -179,7 +179,7 @@ const cardTemplates = [
     type: 'REGRET',
     label: '後悔・伝言',
     color: '#2C3E6B',
-    question: '{{age}}歳の自分に、今の自分なら\n何を伝えたいですか？',
+    question: '{{age}}の自分に、今の自分なら\n何を伝えたいですか？',
     hint: 'この答えの中に、お父さんがあなたに本当に伝えたいことがあるかもしれない。',
     memoryKey: 'regret',
   },
@@ -224,7 +224,6 @@ function createParticles() {
 
 // ===== 年代データ取得 =====
 function getEraForYear(year) {
-  // 最も近い年代データを探す
   const years = Object.keys(eraDatabase).map(Number).sort((a, b) => a - b);
   let closest = years[0];
   for (const y of years) {
@@ -338,13 +337,13 @@ function buildProgressDots() {
     const dot = document.createElement('div');
     dot.className = 'dot' + (i === 0 ? ' active' : '');
     dot.id = 'dot-' + i;
-    dot.style.setProperty('--dot-color', card.color);
     container.appendChild(dot);
   });
 }
 
 function loadCard(index) {
   const card = cardTemplates[index];
+  // {{age}} → "20歳" に置換
   const question = card.question.replace(/{{age}}/g, targetAge + '歳');
 
   document.getElementById('card-type').textContent = card.type;
@@ -355,23 +354,11 @@ function loadCard(index) {
   document.getElementById('card-hint').textContent = card.hint;
   document.getElementById('progress-text').textContent = `${index + 1} / ${cardTemplates.length}`;
   document.getElementById('answer-input').value = '';
-  selectedWho = null;
-  document.getElementById('btn-father').classList.remove('selected');
-  document.getElementById('btn-child').classList.remove('selected');
 
   // カテゴリカラー適用
   const mainCard = document.getElementById('main-card');
   mainCard.style.setProperty('--card-accent', card.color);
   document.getElementById('card-type').style.color = card.color;
-
-  // 父のプリセット記憶をヒント表示
-  const memoryHint = document.getElementById('card-memory-hint');
-  if (fatherMemories[card.memoryKey]) {
-    memoryHint.style.display = 'block';
-    memoryHint.innerHTML = `<span class="memory-label">💭 ${fatherName}の記憶の断片</span><p>${fatherMemories[card.memoryKey]}</p>`;
-  } else {
-    memoryHint.style.display = 'none';
-  }
 
   // Progress dots update
   document.querySelectorAll('.dot').forEach((d, i) => {
@@ -382,21 +369,10 @@ function loadCard(index) {
   });
 }
 
-function selectWho(who) {
-  selectedWho = who;
-  document.getElementById('btn-father').classList.toggle('selected', who === 'father');
-  document.getElementById('btn-child').classList.toggle('selected', who === 'child');
-  const placeholder = who === 'father'
-    ? `${fatherName}の答えを書いてあげよう…`
-    : 'あなたも同じ質問に答えてみよう…';
-  document.getElementById('answer-input').placeholder = placeholder;
-}
-
 function nextCard() {
   const answer = document.getElementById('answer-input').value.trim();
   const answerData = {
     card: cardTemplates[currentCard],
-    who: selectedWho,
     text: answer,
     age: targetAge,
   };
@@ -406,7 +382,6 @@ function nextCard() {
   try {
     const year = new Date().getFullYear();
     const stored = JSON.parse(localStorage.getItem('sameage_answers') || '{}');
-    if (!stored[year]) stored[year] = [];
     stored[year] = answers;
     localStorage.setItem('sameage_answers', JSON.stringify(stored));
   } catch (e) { /* ignore */ }
@@ -417,7 +392,8 @@ function nextCard() {
   setTimeout(() => {
     currentCard++;
     if (currentCard >= cardTemplates.length) {
-      showEnd();
+      // 5問すべて終了 → 比較画面へ
+      showReveal();
       return;
     }
     cardEl.classList.remove('flip-out');
@@ -425,6 +401,51 @@ function nextCard() {
     loadCard(currentCard);
     setTimeout(() => cardEl.classList.remove('flip-in'), 600);
   }, 400);
+}
+
+// ===== 比較・対話画面 =====
+// 5問終了後に、父の回答を初めて見せる＝対話のきっかけ
+function showReveal() {
+  showScreen('screen-reveal');
+  const container = document.getElementById('reveal-cards');
+  container.innerHTML = '';
+
+  cardTemplates.forEach((card, i) => {
+    const childAnswer = answers[i] ? answers[i].text : '';
+    const fatherAnswer = fatherMemories[card.memoryKey] || '';
+    const question = card.question.replace(/{{age}}/g, targetAge + '歳');
+
+    const el = document.createElement('div');
+    el.className = 'reveal-card';
+    el.style.animationDelay = (i * 0.15) + 's';
+
+    el.innerHTML = `
+      <div class="reveal-card-header" style="border-left-color:${card.color}">
+        <span class="reveal-card-type" style="color:${card.color}">${card.type}</span>
+        <span class="reveal-card-label">${card.label}</span>
+      </div>
+      <div class="reveal-question">${question}</div>
+      <div class="reveal-answers">
+        <div class="reveal-answer-box child-box">
+          <div class="reveal-answer-label">🙋 あなたの回答</div>
+          <div class="reveal-answer-text ${!childAnswer ? 'skipped' : ''}">${childAnswer || '（スキップ）'}</div>
+        </div>
+        <div class="reveal-divider">
+          <div class="reveal-divider-line"></div>
+          <span class="reveal-divider-icon">💬</span>
+          <div class="reveal-divider-line"></div>
+        </div>
+        <div class="reveal-answer-box father-box" style="border-left-color:${card.color}">
+          <div class="reveal-answer-label" style="color:${card.color}">👨 ${fatherName}の回答</div>
+          <div class="reveal-answer-text">${fatherAnswer}</div>
+        </div>
+      </div>
+      <div class="reveal-talk-prompt">
+        ↑ この回答について、${fatherName}と話してみよう
+      </div>
+    `;
+    container.appendChild(el);
+  });
 }
 
 // ===== End Screen =====
@@ -436,9 +457,8 @@ function showEnd() {
     if (!a.text) return;
     const item = document.createElement('div');
     item.className = 'recap-item';
-    const whoLabel = a.who === 'father' ? fatherName : 'あなた';
     item.innerHTML = `
-      <div class="recap-who" style="background:${a.card.color}">${whoLabel}</div>
+      <div class="recap-who" style="background:${a.card.color}">あなた</div>
       <div class="recap-q">${a.card.type} — ${a.card.label}</div>
       <div class="recap-a">${a.text}</div>
     `;
@@ -458,42 +478,6 @@ function showEnd() {
   document.getElementById('next-year-spirit').textContent = nextEra.data.spirit;
 
   showScreen('screen-end');
-}
-
-// ===== Compare (Local) =====
-function showComparison() {
-  showScreen('screen-compare');
-  const container = document.getElementById('compare-cards');
-  container.innerHTML = '';
-
-  if (answers.length === 0) {
-    container.innerHTML = '<p style="color:#aaa;text-align:center;padding:40px;">まだ回答がありません</p>';
-    return;
-  }
-
-  answers.forEach((a, i) => {
-    const card = document.createElement('div');
-    card.className = 'compare-card';
-    card.style.animationDelay = (i * 0.1) + 's';
-    const fatherText = a.who === 'father' ? a.text : (fatherMemories[a.card.memoryKey] || '');
-    const childText = a.who === 'child' ? a.text : '';
-
-    card.innerHTML = `
-      <div class="compare-card-type" style="color:${a.card.color}">${a.card.type} — ${a.card.label}</div>
-      <div class="compare-question">${a.card.question.replace(/{{age}}/g, targetAge + '歳')}</div>
-      <div class="compare-answers">
-        <div class="compare-answer-box" style="border-left-color:${a.card.color}">
-          <div class="compare-answer-label" style="color:${a.card.color}">👨 ${fatherName}の回答</div>
-          <div class="compare-answer-text ${!fatherText ? 'waiting' : ''}">${fatherText || 'まだ回答されていません'}</div>
-        </div>
-        <div class="compare-answer-box child-answer">
-          <div class="compare-answer-label">🙋 あなたの回答</div>
-          <div class="compare-answer-text ${!childText ? 'waiting' : ''}">${childText || 'まだ回答されていません'}</div>
-        </div>
-      </div>
-    `;
-    container.appendChild(card);
-  });
 }
 
 // ===== History (LocalStorage) =====
@@ -520,10 +504,9 @@ function showHistory() {
         if (!a.text) return;
         const item = document.createElement('div');
         item.className = 'history-item';
-        const whoLabel = a.who === 'father' ? fatherName : 'あなた';
         item.innerHTML = `
           <div class="history-q">${a.card.type} — ${a.card.question.replace(/{{age}}/g, a.age + '歳')}</div>
-          <div class="history-a"><span class="recap-who" style="background:${a.card.color}">${whoLabel}</span> ${a.text}</div>
+          <div class="history-a"><span class="recap-who" style="background:${a.card.color}">あなた</span> ${a.text}</div>
         `;
         yearDiv.appendChild(item);
       });
@@ -539,6 +522,10 @@ function restart() {
   showScreen('screen-intro');
 }
 
+function goToEnd() {
+  showEnd();
+}
+
 // ===== Init =====
 function init() {
   createParticles();
@@ -548,9 +535,9 @@ function init() {
   window.updateAgeContext = updateAgeContext;
   window.showEraScreen = showEraScreen;
   window.startGame = startGame;
-  window.selectWho = selectWho;
   window.nextCard = nextCard;
-  window.showComparison = showComparison;
+  window.showReveal = showReveal;
+  window.goToEnd = goToEnd;
   window.showHistory = showHistory;
   window.restart = restart;
 }

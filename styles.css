@@ -592,61 +592,19 @@ body::before {
   font-style: italic;
 }
 
-/* 父のプリセット記憶ヒント */
-.card-memory-hint {
-  margin-top: 16px;
-  padding: 12px 16px;
-  background: rgba(212,130,26,0.06);
-  border-left: 3px solid var(--amber-light);
-  display: none;
-}
-
-.memory-label {
-  font-size: 10px;
-  letter-spacing: 0.2em;
-  color: var(--amber);
-  display: block;
-  margin-bottom: 6px;
-  font-weight: 700;
-}
-
-.card-memory-hint p {
-  font-size: 12px;
-  color: var(--brown);
-  line-height: 1.6;
-  font-style: italic;
-}
-
 /* ANSWER AREA */
 .answer-section {
   width: 100%;
   max-width: 400px;
 }
 
-.who-answers {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 20px;
-}
-
-.who-btn {
-  flex: 1;
-  padding: 12px;
-  border: 1.5px solid rgba(92,61,46,0.25);
-  background: transparent;
-  font-family: 'Zen Kaku Gothic New', sans-serif;
+.answer-instruction {
   font-size: 13px;
   color: var(--brown);
-  cursor: pointer;
-  letter-spacing: 0.1em;
-  transition: all 0.25s;
+  line-height: 1.8;
+  margin-bottom: 16px;
   text-align: center;
-}
-
-.who-btn.selected {
-  background: var(--ink);
-  color: var(--amber-light);
-  border-color: var(--ink);
+  font-weight: 300;
 }
 
 .answer-textarea {
@@ -683,92 +641,149 @@ body::before {
 
 .btn-next:hover { background: var(--ink); color: var(--amber-light); }
 
-/* ===== COMPARE VIEW ===== */
-#screen-compare {
+/* ===== REVEAL (対話) VIEW ===== */
+#screen-reveal {
   padding: 60px 20px;
   padding-top: 80px;
   align-items: center;
 }
 
-.compare-content {
-  max-width: 760px;
+.reveal-content {
+  max-width: 640px;
   width: 100%;
 }
 
-.compare-card {
-  background: var(--warm-white);
-  border: 1px solid rgba(92,61,46,0.15);
-  padding: 28px;
-  margin-bottom: 24px;
-  animation: fadeInUp 0.5s ease forwards;
-  opacity: 0;
+.reveal-intro {
+  font-size: 15px;
+  color: var(--brown);
+  line-height: 2;
+  margin-bottom: 40px;
+  font-weight: 300;
 }
 
-.compare-card:nth-child(2) { animation-delay: 0.1s; }
-.compare-card:nth-child(3) { animation-delay: 0.2s; }
-.compare-card:nth-child(4) { animation-delay: 0.3s; }
-.compare-card:nth-child(5) { animation-delay: 0.4s; }
-
-@keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.compare-card-type {
-  font-size: 10px;
-  letter-spacing: 0.35em;
-  color: var(--amber);
-  text-transform: uppercase;
-  margin-bottom: 8px;
+.reveal-intro strong {
+  color: var(--ink);
   font-weight: 700;
 }
 
-.compare-question {
+.reveal-card {
+  background: var(--warm-white);
+  border: 1px solid rgba(92,61,46,0.12);
+  margin-bottom: 32px;
+  animation: fadeInUp 0.6s ease forwards;
+  opacity: 0;
+  overflow: hidden;
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.reveal-card-header {
+  padding: 16px 24px;
+  border-left: 4px solid var(--amber);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(92,61,46,0.03);
+}
+
+.reveal-card-type {
+  font-size: 11px;
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+.reveal-card-label {
+  font-size: 12px;
+  color: var(--brown);
+  letter-spacing: 0.1em;
+}
+
+.reveal-question {
   font-family: 'Shippori Mincho', serif;
   font-size: 16px;
   font-weight: 700;
   color: var(--ink);
-  margin-bottom: 20px;
-  line-height: 1.5;
+  padding: 20px 24px;
+  line-height: 1.6;
+  border-bottom: 1px solid rgba(92,61,46,0.08);
 }
 
-.compare-answers {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
+.reveal-answers {
+  padding: 0 24px;
 }
 
-.compare-answer-box {
-  padding: 20px;
-  background: var(--cream);
+.reveal-answer-box {
+  padding: 20px 0;
+  border-left: none;
+}
+
+.reveal-answer-box.child-box {
+  border-bottom: none;
+}
+
+.reveal-answer-box.father-box {
   border-left: 3px solid var(--amber);
+  padding-left: 20px;
+  margin-left: 0;
+  background: rgba(212,130,26,0.03);
+  padding: 20px;
+  margin: 0 -24px;
+  padding-left: 44px;
+  padding-right: 24px;
 }
 
-.compare-answer-box.child-answer {
-  border-left-color: var(--sage);
-}
-
-.compare-answer-label {
+.reveal-answer-label {
   font-size: 11px;
   letter-spacing: 0.2em;
-  color: var(--amber);
+  color: var(--sage);
   margin-bottom: 8px;
   font-weight: 700;
 }
 
-.compare-answer-box.child-answer .compare-answer-label {
-  color: var(--sage);
-}
-
-.compare-answer-text {
-  font-size: 14px;
+.reveal-answer-text {
+  font-family: 'Shippori Mincho', serif;
+  font-size: 15px;
   line-height: 1.8;
   color: var(--ink);
 }
 
-.compare-answer-text.waiting {
+.reveal-answer-text.skipped {
   color: #bbb;
   font-style: italic;
+  font-family: 'Zen Kaku Gothic New', sans-serif;
+  font-size: 13px;
+}
+
+.reveal-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+}
+
+.reveal-divider-line {
+  flex: 1;
+  height: 1px;
+  background: rgba(92,61,46,0.12);
+}
+
+.reveal-divider-icon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.reveal-talk-prompt {
+  padding: 12px 24px;
+  background: var(--ink);
+  color: var(--amber-light);
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-align: center;
+  font-weight: 300;
 }
 
 /* ===== ENDING ===== */
